@@ -5,547 +5,157 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Redistricting Lab</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Space+Mono:wght@400;700&display=swap');
-
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --border: #2e3347;
-    --text: #e8eaf0;
-    --muted: #6b7280;
-    --accent: #f0b429;
-
-    --d0: #4ade80;   /* district 0 - unassigned */
-    --d1: #ef4444;
-    --d2: #3b82f6;
-    --d3: #a855f7;
-    --d4: #f97316;
-    --d5: #14b8a6;
-
-    --r-white: #f5f0e8;
-    --r-black: #e8a04a;
-    --r-hispanic: #c8773a;
-    --r-asian: #6ab5c8;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow-x: hidden;
-  }
-
-  header {
-    padding: 18px 28px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    background: var(--surface);
-  }
-
-  .logo {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 1.4rem;
-    color: var(--accent);
-    letter-spacing: -0.02em;
-  }
-
-  .logo span { color: var(--text); }
-
-  .tagline {
-    font-size: 0.7rem;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .main {
-    display: flex;
-    flex: 1;
-    gap: 0;
-  }
-
-  /* SIDEBAR */
-  .sidebar {
-    width: 260px;
-    min-width: 260px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 20px 16px;
-    gap: 24px;
-    overflow-y: auto;
-  }
-
-  .section-label {
-    font-size: 0.65rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-
-  .district-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .district-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    border: 2px solid transparent;
-    background: transparent;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.8rem;
-    color: var(--text);
-    text-align: left;
-  }
-
-  .district-btn:hover { background: rgba(255,255,255,0.05); }
-  .district-btn.active { border-color: currentColor; background: rgba(255,255,255,0.07); }
-
-  .district-btn .swatch {
-    width: 18px; height: 18px;
-    border-radius: 4px;
-    flex-shrink: 0;
-  }
-
-  .district-btn .info {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-
-  .district-btn .dname {
-    font-weight: 700;
-    font-size: 0.78rem;
-  }
-
-  .district-btn .dcount {
-    font-size: 0.65rem;
-    color: var(--muted);
-  }
-
-  .eraser-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    border: 2px solid transparent;
-    background: transparent;
-    cursor: pointer;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.78rem;
-    color: var(--text);
-    transition: all 0.15s;
-  }
-  .eraser-btn:hover { background: rgba(255,255,255,0.05); }
-  .eraser-btn.active { border-color: var(--muted); background: rgba(255,255,255,0.07); }
-
-  /* STATS */
-  .stats-box {
-    background: var(--bg);
-    border-radius: 10px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .stat-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.72rem;
-  }
-
-  .stat-label { color: var(--muted); }
-  .stat-val { font-weight: 700; }
-
-  .progress-bar {
-    height: 6px;
-    background: var(--border);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 4px;
-  }
-  .progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.3s;
-  }
-
-  /* RACE LEGEND */
-  .legend-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 0.68rem;
-    color: var(--muted);
-  }
-  .legend-dot {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  /* SCENARIO */
-  .scenario-btns {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .scenario-btn {
-    padding: 8px 12px;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.15s;
-  }
-  .scenario-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .scenario-btn.active { border-color: var(--accent); background: rgba(240,180,41,0.08); color: var(--accent); }
-
-  /* MAIN CONTENT */
-  .content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px;
-    overflow: auto;
-  }
-
-  .content-header {
-    width: 100%;
-    max-width: 760px;
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
-
-  .scenario-title {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 800;
-  }
-  .scenario-desc {
-    font-size: 0.7rem;
-    color: var(--muted);
-    margin-top: 4px;
-    max-width: 440px;
-    line-height: 1.6;
-  }
-
-  .btn-group {
-    display: flex;
-    gap: 8px;
-  }
-
-  .action-btn {
-    padding: 8px 14px;
-    border-radius: 7px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.72rem;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .action-btn.primary {
-    background: var(--accent);
-    color: #0f1117;
-    border-color: var(--accent);
-    font-weight: 700;
-  }
-  .action-btn.primary:hover { opacity: 0.9; }
-
-  /* GRID */
-  .grid-wrapper {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
-    display: inline-block;
-    user-select: none;
-  }
-
-  #grid-container {
-    display: grid;
-    gap: 3px;
-    cursor: crosshair;
-  }
-
-  .cell {
-    width: 52px;
-    height: 52px;
-    border-radius: 7px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition: transform 0.1s, box-shadow 0.1s;
-    border: 2px solid transparent;
-    cursor: crosshair;
-  }
-
-  .cell:hover { transform: scale(1.06); z-index: 2; }
-
-  .cell .voter-count {
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 0.78rem;
-    line-height: 1;
-  }
-
-  .cell .race-dot-row {
-    display: flex;
-    gap: 2px;
-    margin-top: 3px;
-  }
-
-  .cell .race-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-  }
-
-  .cell.assigned {
-    border-color: rgba(255,255,255,0.15);
-    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08);
-  }
-
-  /* ANALYSIS PANEL */
-  .analysis {
-    width: 100%;
-    max-width: 760px;
-    margin-top: 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 18px 20px;
-  }
-
-  .analysis-title {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .analysis-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 10px;
-  }
-
-  .analysis-card {
-    background: var(--bg);
-    border-radius: 9px;
-    padding: 12px;
-    border-left: 3px solid var(--border);
-  }
-
-  .analysis-card .card-name {
-    font-size: 0.65rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 6px;
-  }
-
-  .analysis-card .card-votes {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 800;
-  }
-
-  .analysis-card .card-pct {
-    font-size: 0.68rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-
-  .analysis-card .mini-bar {
-    margin-top: 8px;
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-  .mini-bar-fill { height: 100%; border-radius: 2px; }
-
-  .warning-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.65rem;
-    padding: 3px 8px;
-    border-radius: 20px;
-    background: rgba(239,68,68,0.15);
-    color: #ef4444;
-    border: 1px solid rgba(239,68,68,0.3);
-  }
-
-  .ok-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.65rem;
-    padding: 3px 8px;
-    border-radius: 20px;
-    background: rgba(74,222,128,0.12);
-    color: #4ade80;
-    border: 1px solid rgba(74,222,128,0.25);
-  }
-
-  .tooltip {
-    position: fixed;
-    background: #1e2130;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 0.68rem;
-    pointer-events: none;
-    z-index: 100;
-    max-width: 180px;
-    display: none;
-    line-height: 1.6;
-  }
-  .tooltip.visible { display: block; }
-
-  /* TOAST NOTIFICATION */
-  #toast-container {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 200;
-    pointer-events: none;
-  }
-
-  .toast {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 18px;
-    border-radius: 10px;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    font-weight: 700;
-    border: 1px solid;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
-    white-space: nowrap;
-  }
-
-  .toast.toast-success {
-    background: rgba(20, 30, 20, 0.97);
-    border-color: #4ade80;
-    color: #4ade80;
-  }
-
-  .toast.toast-close {
-    animation: toastOut 0.3s ease-in forwards;
-  }
-
-  @keyframes toastIn {
-    from { opacity: 0; transform: translateY(-12px) scale(0.95); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  @keyframes toastOut {
-    from { opacity: 1; transform: translateY(0) scale(1); }
-    to   { opacity: 0; transform: translateY(-8px) scale(0.95); }
-  }
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Courier+Prime:wght@400;700&display=swap');
+  :root{--bg:#0f1117;--surface:#1a1d27;--border:#2e3347;--text:#e8eaf0;--muted:#6b7280;--accent:#f0b429;--r-white:#f5f0e8;--r-black:#f97316;--r-hispanic:#e05a8a;--r-asian:#38bdf8;--bridge:#c8a45a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Courier Prime',monospace;min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
+  header{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+  .logo{font-family:'Oswald',sans-serif;font-weight:800;font-size:1.4rem;color:var(--accent);letter-spacing:-0.02em;}
+  .logo span{color:var(--text);}
+  .tagline{font-size:0.7rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+  .help-btn{padding:7px 14px;border-radius:7px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:'Courier Prime',monospace;font-size:0.72rem;cursor:pointer;transition:all 0.15s;}
+  .help-btn:hover{background:rgba(240,180,41,0.1);}
+  .main{display:flex;flex:1;}
+  .sidebar{width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 16px;gap:24px;overflow-y:auto;}
+  .section-label{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .district-list{display:flex;flex-direction:column;gap:6px;}
+  .district-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:2px solid transparent;background:transparent;cursor:pointer;transition:all 0.15s;font-family:'Courier Prime',monospace;font-size:0.8rem;color:var(--text);text-align:left;}
+  .district-btn:hover{background:rgba(255,255,255,0.05);}
+  .district-btn.active{border-color:currentColor;background:rgba(255,255,255,0.07);}
+  .district-btn .swatch{width:18px;height:18px;border-radius:4px;flex-shrink:0;}
+  .district-btn .info{display:flex;flex-direction:column;gap:1px;}
+  .district-btn .dname{font-weight:700;font-size:0.78rem;}
+  .district-btn .dcount{font-size:0.65rem;color:var(--muted);}
+  .eraser-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 12px;border-radius:8px;border:2px solid var(--border);background:transparent;cursor:pointer;font-family:'Courier Prime',monospace;font-size:0.78rem;font-weight:700;color:var(--muted);transition:all 0.15s;width:100%;margin-top:8px;}
+  .eraser-btn:hover{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.07);}
+  .eraser-btn.active{border-color:#ef4444;color:#ef4444;background:rgba(239,68,68,0.12);}
+  .stats-box{background:var(--bg);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+  .stat-row{display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;}
+  .stat-label{color:var(--muted);}
+  .stat-val{font-weight:700;}
+  .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:4px;}
+  .progress-fill{height:100%;border-radius:3px;transition:width 0.3s;}
+  .legend-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .legend-item{display:flex;align-items:center;gap:7px;font-size:0.68rem;color:var(--muted);}
+  .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+  .scenario-btns{display:flex;flex-direction:column;gap:6px;}
+  .scenario-btn{padding:8px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Courier Prime',monospace;font-size:0.7rem;cursor:pointer;text-align:left;transition:all 0.15s;}
+  .scenario-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .scenario-btn.active{border-color:var(--accent);background:rgba(240,180,41,0.08);color:var(--accent);}
+  .content{flex:1;display:flex;flex-direction:column;align-items:center;padding:24px;overflow:auto;}
+  .content-header{width:100%;max-width:760px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;}
+  .scenario-title{font-family:'Oswald',sans-serif;font-size:1.3rem;font-weight:800;}
+  .scenario-desc{font-size:0.7rem;color:var(--muted);margin-top:4px;max-width:440px;line-height:1.6;}
+  .btn-group{display:flex;gap:8px;}
+  .action-btn{padding:8px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text);font-family:'Courier Prime',monospace;font-size:0.72rem;cursor:pointer;transition:all 0.15s;}
+  .action-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .action-btn.primary{background:var(--accent);color:#0f1117;border-color:var(--accent);font-weight:700;}
+  .action-btn.primary:hover{opacity:0.9;}
+  .grid-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;display:inline-block;user-select:none;}
+  #grid-container{display:grid;gap:3px;cursor:crosshair;}
+  .cell{width:52px;height:52px;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;transition:transform 0.1s;border:2px solid transparent;cursor:crosshair;}
+  .cell:hover{transform:scale(1.06);z-index:2;}
+  .cell.river-cell{cursor:not-allowed;}
+  .cell.river-cell:hover{transform:none;}
+  .cell .voter-count{font-family:'Oswald',sans-serif;font-weight:800;font-size:0.78rem;line-height:1;}
+  .cell .race-dot-row{display:flex;gap:2px;margin-top:3px;}
+  .cell .race-dot{width:6px;height:6px;border-radius:50%;}
+  .cell.assigned{border-color:rgba(255,255,255,0.15);box-shadow:inset 0 0 0 2px rgba(255,255,255,0.08);}
+  .cell .bridge-label{font-size:0.48rem;letter-spacing:0.05em;text-transform:uppercase;margin-top:2px;}
+  .analysis{width:100%;max-width:760px;margin-top:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+  .analysis-title{font-family:'Oswald',sans-serif;font-weight:700;font-size:0.95rem;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .analysis-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+  .analysis-card{background:var(--bg);border-radius:9px;padding:12px;border-left:3px solid var(--border);}
+  .analysis-card .card-name{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;}
+  .analysis-card .card-votes{font-family:'Oswald',sans-serif;font-size:1.1rem;font-weight:800;}
+  .analysis-card .card-pct{font-size:0.68rem;color:var(--muted);margin-top:2px;}
+  .analysis-card .mini-bar{margin-top:8px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .mini-bar-fill{height:100%;border-radius:2px;}
+  .warning-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.65rem;padding:3px 8px;border-radius:20px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);}
+  .ok-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.65rem;padding:3px 8px;border-radius:20px;background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.25);}
+  .tooltip{position:fixed;background:#1e2130;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:0.68rem;pointer-events:none;z-index:100;max-width:200px;display:none;line-height:1.6;}
+  .tooltip.visible{display:block;}
+  #nudge-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a0505;border:2px solid #ef4444;border-radius:10px;padding:12px 20px;font-family:'Courier Prime',monospace;font-size:0.74rem;color:#ef4444;font-weight:700;z-index:9999;white-space:nowrap;box-shadow:0 6px 24px rgba(0,0,0,0.6);opacity:0;transition:opacity 0.25s ease;pointer-events:none;}
+  #nudge-toast.show{opacity:1;}
+  #info-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#05101a;border:2px solid #38bdf8;border-radius:10px;padding:14px 22px;font-family:'Courier Prime',monospace;font-size:0.72rem;color:#38bdf8;font-weight:700;z-index:9999;max-width:400px;text-align:center;white-space:normal;line-height:1.6;box-shadow:0 6px 24px rgba(0,0,0,0.6);opacity:0;transition:opacity 0.25s ease;pointer-events:none;}
+  #info-toast.show{opacity:1;}
+  #ctx-menu{position:fixed;background:#1e2130;border:1px solid var(--border);border-radius:10px;padding:6px;z-index:300;display:none;box-shadow:0 12px 40px rgba(0,0,0,0.55);min-width:170px;}
+  #ctx-menu.visible{display:block;}
+  .ctx-label{font-size:0.6rem;color:var(--muted);padding:4px 12px 2px;letter-spacing:0.1em;text-transform:uppercase;}
+  .ctx-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:6px;cursor:pointer;font-family:'Courier Prime',monospace;font-size:0.72rem;color:var(--text);transition:background 0.1s;}
+  .ctx-item:hover{background:rgba(255,255,255,0.07);}
+  .ctx-swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+  .ctx-sep{height:1px;background:var(--border);margin:4px 0;}
+  #balance-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:400;display:none;align-items:center;justify-content:center;}
+  #balance-overlay.visible{display:flex;}
+  #balance-modal{background:#1a1d27;border:1px solid var(--border);border-radius:18px;padding:36px 40px;max-width:420px;width:92%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.6);animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+  @keyframes popIn{from{opacity:0;transform:scale(0.85) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  .modal-icon{font-size:2.6rem;margin-bottom:10px;}
+  .modal-title{font-family:'Oswald',sans-serif;font-size:1.45rem;font-weight:800;margin-bottom:14px;}
+  .modal-sub{font-size:0.72rem;color:var(--muted);line-height:1.75;margin-bottom:26px;}
+  .modal-close-btn{padding:12px 30px;border-radius:9px;border:none;background:var(--accent);color:#0f1117;font-family:'Courier Prime',monospace;font-size:0.8rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+  .modal-close-btn:hover{opacity:0.85;}
+  .modal-next{font-size:0.65rem;color:var(--muted);margin-top:14px;line-height:1.5;}
+  #tutorial-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;}
+  #tutorial-overlay.visible{display:flex;}
+  #tutorial-modal{background:#1a1d27;border:1px solid var(--border);border-radius:18px;max-width:540px;width:95%;box-shadow:0 24px 80px rgba(0,0,0,0.7);animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;overflow:hidden;max-height:92vh;display:flex;flex-direction:column;}
+  .tut-header{background:linear-gradient(135deg,#1e2435,#252a3e);padding:26px 32px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+  .tut-header-title{font-family:'Oswald',sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent);margin-bottom:3px;}
+  .tut-header-sub{font-size:0.7rem;color:var(--muted);}
+  .tut-steps{padding:6px 32px 4px;overflow-y:auto;flex:1;}
+  .tut-step{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid rgba(46,51,71,0.55);}
+  .tut-step:last-child{border-bottom:none;}
+  .step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#0f1117;font-family:'Oswald',sans-serif;font-weight:800;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .step-title{font-weight:700;font-size:0.8rem;margin-bottom:4px;}
+  .step-desc{font-size:0.68rem;color:var(--muted);line-height:1.65;}
+  .step-desc strong{color:var(--text);}
+  .tut-footer{padding:18px 32px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+  .tut-tip{font-size:0.65rem;color:var(--muted);max-width:270px;line-height:1.5;}
+  .tut-start{padding:11px 24px;border-radius:9px;border:none;background:var(--accent);color:#0f1117;font-family:'Courier Prime',monospace;font-size:0.78rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;white-space:nowrap;}
+  .tut-start:hover{opacity:0.85;}
 </style>
 </head>
 <body>
-
 <header>
   <div>
     <div class="logo">Redistricting <span>Lab</span></div>
     <div class="tagline">An interactive civics tool</div>
   </div>
+  <button class="help-btn" onclick="showTutorial()">? How to Play</button>
 </header>
-
 <div class="main">
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div>
       <div class="section-label">Draw Districts</div>
       <div class="district-list" id="district-list"></div>
-      <div style="margin-top:8px;">
-        <button class="eraser-btn" id="eraser-btn" onclick="selectEraser()">
-          <span style="font-size:1rem">✕</span>
-          <span>Erase / Unassign</span>
-        </button>
-      </div>
+      <button class="eraser-btn" id="eraser-btn" onclick="selectEraser()">✕ Erase / Unassign</button>
     </div>
-
     <div>
       <div class="section-label">Coverage</div>
-      <div class="stats-box" id="coverage-stats">
-        <div class="stat-row">
-          <span class="stat-label">Cells assigned</span>
-          <span class="stat-val" id="stat-assigned">0 / 0</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="stat-progress" style="background:var(--accent); width:0%"></div>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Total voters</span>
-          <span class="stat-val" id="stat-total-voters">0</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat-label">Assigned voters</span>
-          <span class="stat-val" id="stat-assigned-voters">0</span>
-        </div>
+      <div class="stats-box">
+        <div class="stat-row"><span class="stat-label">Cells assigned</span><span class="stat-val" id="stat-assigned">0/0</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="stat-progress" style="background:var(--accent);width:0%"></div></div>
+        <div class="stat-row"><span class="stat-label">Total voters</span><span class="stat-val" id="stat-total-voters">0</span></div>
+        <div class="stat-row"><span class="stat-label">Assigned voters</span><span class="stat-val" id="stat-assigned-voters">0</span></div>
+        <div class="stat-row"><span class="stat-label">Ideal / district</span><span class="stat-val" id="stat-ideal">—</span></div>
       </div>
     </div>
-
     <div>
       <div class="section-label">Race Key</div>
-      <div class="legend-grid">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--r-white)"></div>White</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--r-black)"></div>Black</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--r-hispanic)"></div>Hispanic</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--r-asian)"></div>Asian</div>
+      <div class="legend-grid" style="grid-template-columns:1fr;gap:5px;">
+        <div class="legend-item" style="justify-content:space-between;"><div style="display:flex;align-items:center;gap:7px;"><div class="legend-dot" style="background:var(--r-white)"></div>White</div><span class="race-pct" id="rpct-white" style="font-size:0.65rem;color:var(--accent);font-weight:700;">—</span></div>
+        <div class="legend-item" style="justify-content:space-between;"><div style="display:flex;align-items:center;gap:7px;"><div class="legend-dot" style="background:var(--r-black)"></div>Black</div><span class="race-pct" id="rpct-black" style="font-size:0.65rem;color:var(--accent);font-weight:700;">—</span></div>
+        <div class="legend-item" style="justify-content:space-between;"><div style="display:flex;align-items:center;gap:7px;"><div class="legend-dot" style="background:var(--r-hispanic)"></div>Hispanic</div><span class="race-pct" id="rpct-hispanic" style="font-size:0.65rem;color:var(--accent);font-weight:700;">—</span></div>
+        <div class="legend-item" style="justify-content:space-between;"><div style="display:flex;align-items:center;gap:7px;"><div class="legend-dot" style="background:var(--r-asian)"></div>Asian</div><span class="race-pct" id="rpct-asian" style="font-size:0.65rem;color:var(--accent);font-weight:700;">—</span></div>
       </div>
     </div>
-
+    <div>
+      <div class="section-label">Map Key</div>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-dot" style="background:#1a3a5c;border:1px solid #2a6090"></div>River</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2d2010;border:1px solid var(--bridge)"></div>Bridge</div>
+      </div>
+    </div>
     <div>
       <div class="section-label">Scenarios</div>
       <div class="scenario-btns">
@@ -555,572 +165,545 @@
       </div>
     </div>
   </div>
-
-  <!-- CONTENT -->
   <div class="content">
     <div class="content-header">
       <div>
         <div class="scenario-title" id="scenario-title">Urban City District</div>
-        <div class="scenario-desc" id="scenario-desc">
-          Paint cells to assign them to districts. Try to create balanced districts with roughly equal voter populations. Notice how boundaries affect minority representation.
-        </div>
+        <div class="scenario-desc" id="scenario-desc">Paint cells to assign them to districts.</div>
       </div>
       <div class="btn-group">
         <button class="action-btn" onclick="resetGrid()">Reset</button>
         <button class="action-btn primary" onclick="analyzeDistricts()">Analyze ▶</button>
       </div>
     </div>
-
-    <div class="grid-wrapper">
-      <div id="grid-container"></div>
-    </div>
-
-    <div class="analysis" id="analysis-panel">
-      <div class="analysis-title">
-        📊 District Analysis
-        <span id="balance-badge"></span>
-      </div>
+    <div class="grid-wrapper"><div id="grid-container"></div></div>
+    <div class="analysis">
+      <div class="analysis-title">📊 District Analysis <span id="balance-badge"></span></div>
       <div class="analysis-grid" id="analysis-grid">
-        <div style="font-size:0.75rem;color:var(--muted);grid-column:1/-1">
-          Draw some districts, then click <strong style="color:var(--text)">Analyze</strong> to see the breakdown.
-        </div>
+        <div style="font-size:0.75rem;color:var(--muted);grid-column:1/-1">Draw some districts, then click <strong style="color:var(--text)">Analyze</strong> to see the breakdown.</div>
       </div>
     </div>
   </div>
 </div>
-
 <div class="tooltip" id="tooltip"></div>
-<div id="toast-container"></div>
-
+<div id="nudge-toast"></div>
+<div id="info-toast"></div>
+<div id="ctx-menu">
+  <div class="ctx-label">Assign to district</div>
+  <div id="ctx-district-items"></div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" id="ctx-unassign"><div class="ctx-swatch" style="background:var(--border)"></div>Unassign</div>
+</div>
+<div id="balance-overlay">
+  <div id="balance-modal">
+    <div class="modal-icon">🎉</div>
+    <div class="modal-title" id="modal-title">District Balanced!</div>
+    <div id="modal-badge" style="margin-bottom:16px;"></div>
+    <div class="modal-sub" id="modal-sub"></div>
+    <button class="modal-close-btn" onclick="closeBalanceModal()">Got it — keep drawing ✕</button>
+    <div class="modal-next" id="modal-next"></div>
+  </div>
+</div>
+<div id="tutorial-overlay">
+  <div id="tutorial-modal">
+    <div class="tut-header">
+      <div class="tut-header-title">Welcome to Redistricting Lab</div>
+      <div class="tut-header-sub">Learn how political boundaries shape representation</div>
+    </div>
+    <div class="tut-steps">
+      <div class="tut-step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Select a district to draw</div>
+          <div class="step-desc">Click a <strong>District 1–5</strong> button in the sidebar. You must have a district selected before painting — if you click with Erase active on an empty cell, you'll get a reminder.</div>
+        </div>
+      </div>
+      <div class="tut-step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Paint cells onto the map</div>
+          <div class="step-desc"><strong>Click</strong> a cell to assign it. <strong>Click-drag</strong> to paint many cells. Click an assigned cell again to deselect it. Districts must stay <strong>contiguous</strong> — no islands. Blocked moves flash red.</div>
+        </div>
+      </div>
+      <div class="tut-step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Right-click for a quick assign menu</div>
+          <div class="step-desc"><strong>Right-click</strong> any cell to open a menu and assign it to any district without switching tools.</div>
+        </div>
+      </div>
+      <div class="tut-step">
+        <div class="step-num" style="background:#1a5a8a;color:#7ec8f0;font-size:1rem;">🌊</div>
+        <div>
+          <div class="step-title">The River — cross only at bridges</div>
+          <div class="step-desc">Each map has a <strong style="color:#38bdf8">river</strong> (dark blue cells) running through it. <strong>Districts cannot cross the river</strong> except at the two <strong style="color:var(--bridge)">bridge cells</strong> (gold/tan). Hover a bridge cell to confirm. In the <strong>⚡ Gerrymandering?</strong> scenario, this rule is lifted so you can experiment freely — you'll see a notice when you switch to it.</div>
+        </div>
+      </div>
+      <div class="tut-step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Read the race dots</div>
+          <div class="step-desc">Each cell shows colored dots: <strong style="color:var(--r-white)">●</strong> White &nbsp;<strong style="color:var(--r-black)">●</strong> Black &nbsp;<strong style="color:var(--r-hispanic)">●</strong> Hispanic &nbsp;<strong style="color:var(--r-asian)">●</strong> Asian. The number is voter population.</div>
+        </div>
+      </div>
+      <div class="tut-step">
+        <div class="step-num">5</div>
+        <div>
+          <div class="step-title">Aim for equal populations</div>
+          <div class="step-desc">Each district should have roughly the same voters — the <strong>"one person, one vote"</strong> principle. Within 5% of the ideal triggers a celebration popup, and the next district is auto-selected.</div>
+        </div>
+      </div>
+      <div class="tut-step">
+        <div class="step-num">6</div>
+        <div>
+          <div class="step-title">Analyze your map</div>
+          <div class="step-desc">Click <strong>Analyze ▶</strong> to see a full fairness verdict: population balance, compactness score (Polsby-Popper), and racial representation — including whether minorities were packed or cracked.</div>
+        </div>
+      </div>
+    </div>
+    <div class="tut-footer">
+      <div class="tut-tip">💡 Try <strong style="color:var(--text)">⚡ Gerrymandering?</strong> to draw intentionally unfair maps with no river restrictions — then Analyze to see the consequences.</div>
+      <button class="tut-start" onclick="closeTutorial()">Start Drawing →</button>
+    </div>
+  </div>
+</div>
 <script>
-// ─── STATE ───────────────────────────────────────────────────────────────────
-let GRID_SIZE = 8;
-let gridData = [];       // {voters, races:[{color,count}], district}
-let selectedDistrict = 1;
-let painting = false;
+const GRID_SIZE=8,NUM_DISTRICTS=5;
+const DISTRICT_COLORS=[null,'#ef4444','#3b82f6','#a855f7','#f97316','#14b8a6'];
+const DISTRICT_NAMES=['','District 1','District 2','District 3','District 4','District 5'];
+const RACE_COLORS={white:'#f5f0e8',black:'#f97316',hispanic:'#e05a8a',asian:'#38bdf8'};
 
-const DISTRICT_COLORS = [
-  null,
-  '#ef4444', '#3b82f6', '#a855f7', '#f97316', '#14b8a6'
-];
-const DISTRICT_NAMES = ['', 'District 1', 'District 2', 'District 3', 'District 4', 'District 5'];
-const NUM_DISTRICTS = 5;
+// River down column 4, bridges at rows 1 and 5
+const RIVER_COL=4;
+const BRIDGE_ROWS=[1,5];
+function cellKind(r,c){if(c!==RIVER_COL)return'n';if(BRIDGE_ROWS.includes(r))return'b';return'r';}
 
-const RACE_COLORS = {
-  white:    '#f5f0e8',
-  black:    '#e8a04a',
-  hispanic: '#c8773a',
-  asian:    '#6ab5c8',
-};
+let gridData=[],selectedDistrict=1,painting=false,paintStartDistrict=null;
+let pendingNextDistrict=null,currentScenario=0,riverRulesActive=true;
+const districtToastShown={};
+let ctxRow=null,ctxCol=null,nudgeT=null,infoT=null;
 
-// ─── SCENARIOS ───────────────────────────────────────────────────────────────
-const SCENARIOS = [
-  {
-    title: 'Urban City District',
-    desc: 'A diverse urban area. Try to create 5 districts that each have roughly equal populations and represent the community\'s diversity fairly.',
-    districts: NUM_DISTRICTS,
-    grid: buildUrbanGrid(),
-  },
-  {
-    title: 'Suburban Mix',
-    desc: 'A suburban region where communities of different backgrounds live in clusters. Can you draw districts that give each community fair representation?',
-    districts: NUM_DISTRICTS,
-    grid: buildSuburbanGrid(),
-  },
-  {
-    title: 'Gerrymandering Challenge',
-    desc: 'This map has a concentrated minority community. Try two approaches: (1) draw boundaries that give them a voice, (2) try to "crack" or "pack" that community. What do you notice?',
-    districts: NUM_DISTRICTS,
-    grid: buildGerryGrid(),
-  },
-];
-
-function randRaces(dominant, count) {
-  // Returns array of race dots. Dominant race appears more.
-  const races = ['white','black','hispanic','asian'];
-  const pool = [dominant, dominant, dominant];
-  races.forEach(r => { if (r !== dominant) pool.push(r); });
-  const result = {};
-  for (let i = 0; i < count; i++) {
-    const r = pool[Math.floor(Math.random() * pool.length)];
-    result[r] = (result[r] || 0) + 1;
-  }
-  return Object.entries(result).map(([race, c]) => ({ color: RACE_COLORS[race], count: c, race }));
+function showNudge(msg){
+  const el=document.getElementById('nudge-toast');
+  el.textContent=msg||'Select a district first, then paint cells';
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(nudgeT);
+  nudgeT=setTimeout(()=>el.classList.remove('show'),2600);
+}
+function showInfoToast(msg){
+  const el=document.getElementById('info-toast');
+  el.innerHTML=msg;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(infoT);
+  infoT=setTimeout(()=>el.classList.remove('show'),5000);
 }
 
-function cell(voters, dominant) {
-  const dots = Math.min(4, Math.ceil(voters / 150));
-  return { voters, races: randRaces(dominant, dots), district: 0 };
-}
+function hexA(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;}
 
-function buildUrbanGrid() {
-  // 8x8 mixed urban with clusters
-  const dominant = [
-    ['white','white','white','hispanic','hispanic','black','black','black'],
-    ['white','white','white','hispanic','hispanic','black','black','black'],
-    ['white','asian','asian','hispanic','hispanic','black','black','black'],
-    ['asian','asian','asian','hispanic','hispanic','hispanic','black','white'],
-    ['asian','asian','asian','hispanic','white','white','hispanic','white'],
-    ['hispanic','hispanic','white','white','white','white','white','white'],
-    ['hispanic','hispanic','white','white','white','asian','asian','white'],
-    ['hispanic','hispanic','white','white','asian','asian','asian','white'],
-  ];
-  const voters = [
-    [320,410,290,380,450,510,480,390],
-    [350,440,310,400,360,530,490,410],
-    [300,380,420,370,340,500,460,380],
-    [410,390,350,430,380,420,510,440],
-    [360,370,340,410,450,390,350,420],
-    [430,350,380,460,420,410,370,390],
-    [370,400,390,440,380,360,410,350],
-    [340,420,410,380,370,400,430,320],
-  ];
-  return Array.from({length:8}, (_,r) => Array.from({length:8}, (_,c) => cell(voters[r][c], dominant[r][c])));
+function randRaces(dom,cnt){
+  const races=['white','black','hispanic','asian'],pool=[dom,dom,dom];
+  races.forEach(r=>{if(r!==dom)pool.push(r);});
+  const res={};
+  for(let i=0;i<cnt;i++){const r=pool[Math.floor(Math.random()*pool.length)];res[r]=(res[r]||0)+1;}
+  return Object.entries(res).map(([race,c])=>({color:RACE_COLORS[race],count:c,race}));
 }
+function mkCell(v,d){return{voters:v,races:randRaces(d,Math.min(4,Math.ceil(v/150))),district:0};}
+function mkBridge(){return{voters:0,races:[],district:0,isBridge:true};}
 
-function buildSuburbanGrid() {
-  const dominant = [
-    ['white','white','white','white','white','white','asian','asian'],
-    ['white','white','white','white','white','asian','asian','asian'],
-    ['white','white','hispanic','asian','asian','asian','asian','white'],
-    ['hispanic','hispanic','hispanic','hispanic','asian','asian','white','white'],
-    ['hispanic','hispanic','hispanic','black','black','hispanic','white','white'],
-    ['hispanic','hispanic','black','black','black','hispanic','white','white'],
-    ['hispanic','hispanic','black','black','white','white','white','white'],
-    ['hispanic','white','white','white','white','white','white','white'],
-  ];
-  const voters = Array.from({length:8}, () => Array.from({length:8}, () => 80 + Math.floor(Math.random()*120)));
-  return Array.from({length:8}, (_,r) => Array.from({length:8}, (_,c) => cell(voters[r][c], dominant[r][c])));
-}
-
-function buildGerryGrid() {
-  // Central cluster of minority voters
-  const dominant = [
-    ['white','white','white','white','white','white','white','white'],
-    ['white','white','white','white','white','white','white','white'],
-    ['white','white','black','black','black','white','white','white'],
-    ['white','white','black','black','black','black','white','white'],
-    ['white','white','black','black','black','black','white','white'],
-    ['white','white','white','black','black','white','white','white'],
-    ['white','white','white','white','white','white','white','white'],
-    ['white','white','white','white','white','white','white','white'],
-  ];
-  const voters = Array.from({length:8}, (_,r) => Array.from({length:8}, (_,c) => {
-    const isDense = r>=2&&r<=5&&c>=2&&c<=5;
-    return isDense ? 500 + Math.floor(Math.random()*200) : 200 + Math.floor(Math.random()*150);
+function buildUrban(){
+  const d=[['white','white','white','hispanic','hispanic','black','black','black'],['white','white','white','hispanic','hispanic','black','black','black'],['white','asian','asian','hispanic','hispanic','black','black','black'],['asian','asian','asian','hispanic','hispanic','hispanic','black','white'],['asian','asian','asian','hispanic','white','white','hispanic','white'],['hispanic','hispanic','white','white','white','white','white','white'],['hispanic','hispanic','white','white','white','asian','asian','white'],['hispanic','hispanic','white','white','asian','asian','asian','white']];
+  const v=[[320,410,290,380,510,480,390,350],[350,440,310,400,530,490,410,360],[300,380,420,370,500,460,380,340],[410,390,350,430,420,510,440,380],[360,370,340,410,390,350,420,430],[430,350,380,460,410,370,390,400],[370,400,390,440,360,410,350,380],[340,420,410,380,400,430,320,360]];
+  return Array.from({length:8},(_,r)=>Array.from({length:8},(_,c)=>{
+    if(c===RIVER_COL&&BRIDGE_ROWS.includes(r))return mkBridge();
+    return mkCell(v[r][c],d[r][c]);
   }));
-  return Array.from({length:8}, (_,r) => Array.from({length:8}, (_,c) => cell(voters[r][c], dominant[r][c])));
+}
+function buildSuburban(){
+  const d=[['white','white','white','white','white','asian','asian','asian'],['white','white','white','white','white','asian','asian','asian'],['white','white','hispanic','asian','asian','asian','white','white'],['hispanic','hispanic','hispanic','hispanic','asian','white','white','white'],['hispanic','hispanic','hispanic','black','black','hispanic','white','white'],['hispanic','hispanic','black','black','black','hispanic','white','white'],['hispanic','hispanic','black','black','white','white','white','white'],['hispanic','white','white','white','white','white','white','white']];
+  const v=Array.from({length:8},()=>Array.from({length:8},()=>80+Math.floor(Math.random()*120)));
+  return Array.from({length:8},(_,r)=>Array.from({length:8},(_,c)=>{
+    if(c===RIVER_COL&&BRIDGE_ROWS.includes(r))return mkBridge();
+    return mkCell(v[r][c],d[r][c]);
+  }));
+}
+function buildGerry(){
+  const d=[['white','white','white','white','white','white','white','white'],['white','white','white','white','white','white','white','white'],['white','white','black','black','black','white','white','white'],['white','white','black','black','black','black','white','white'],['white','white','black','black','black','black','white','white'],['white','white','white','black','black','white','white','white'],['white','white','white','white','white','white','white','white'],['white','white','white','white','white','white','white','white']];
+  const v=Array.from({length:8},(_,r)=>Array.from({length:8},(_,c)=>(r>=2&&r<=5&&c>=2&&c<=5)?500+Math.floor(Math.random()*200):200+Math.floor(Math.random()*150)));
+  return Array.from({length:8},(_,r)=>Array.from({length:8},(_,c)=>{
+    if(c===RIVER_COL&&BRIDGE_ROWS.includes(r))return mkBridge();
+    return mkCell(v[r][c],d[r][c]);
+  }));
 }
 
-// ─── INIT ────────────────────────────────────────────────────────────────────
-let currentScenario = 0;
+const SCENARIOS=[
+  {title:'Urban City District',desc:'A diverse urban area. Create 5 balanced districts. The river divides the city — cross only at the two bridges.',grid:buildUrban(),riverRules:true},
+  {title:'Suburban Mix',desc:'Communities cluster by neighborhood. Draw fair districts. The river divides this region — cross only at the two bridges.',grid:buildSuburban(),riverRules:true},
+  {title:'Gerrymandering Challenge',desc:'A concentrated minority sits in the center. River restrictions are OFF — draw freely. Try giving them a voice, then try cracking or packing them.',grid:buildGerry(),riverRules:false},
+];
 
-function loadScenario(idx) {
-  currentScenario = idx;
-  const sc = SCENARIOS[idx];
-  document.getElementById('scenario-title').textContent = sc.title;
-  document.getElementById('scenario-desc').textContent = sc.desc;
-  document.querySelectorAll('.scenario-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
-
-  // Deep copy grid
-  gridData = sc.grid.map(row => row.map(c => ({ ...c, races: c.races.map(r=>({...r})), district: 0 })));
-  // Reset toast tracking
-  for (let d = 1; d <= NUM_DISTRICTS; d++) districtToastShown[d] = false;
-  renderGrid();
-  buildDistrictSidebar();
-  updateStats();
-  document.getElementById('analysis-grid').innerHTML = '<div style="font-size:0.75rem;color:var(--muted);grid-column:1/-1">Draw some districts, then click <strong style="color:var(--text)">Analyze</strong> to see the breakdown.</div>';
-  document.getElementById('balance-badge').innerHTML = '';
+// River crossing check: can we step from (fr,fc) to (tr,tc)?
+function riverOk(fr,fc,tr,tc){
+  if(!riverRulesActive)return true;
+  if(cellKind(tr,tc)==='r')return false; // never land on pure river
+  // if source is left bank (col<RIVER_COL) and target is right bank (col>RIVER_COL) or vice versa:
+  // that would require jumping 2 columns which can't happen adjacently on a grid
+  // The only cross-river moves are col3->col4 or col4->col5
+  // col3->col4: entering river col — only ok if target is bridge
+  // col4->col5: leaving river col — ok (we're leaving the bridge)
+  // col5->col4: entering river col — only ok if target is bridge
+  // col4->col3: leaving river col — ok
+  if(tc===RIVER_COL&&cellKind(tr,tc)==='r')return false;
+  return true;
 }
 
-function init() { loadScenario(0); }
+function riverAllowsAdd(r,c,d){
+  if(!riverRulesActive)return true;
+  if(cellKind(r,c)==='r')return false;
+  let has=false;
+  for(let rr=0;rr<GRID_SIZE&&!has;rr++)for(let cc=0;cc<GRID_SIZE&&!has;cc++)if(gridData[rr][cc].district===d)has=true;
+  if(!has)return true;
+  for(const[nr,nc]of[[r-1,c],[r+1,c],[r,c-1],[r,c+1]]){
+    if(nr<0||nr>=GRID_SIZE||nc<0||nc>=GRID_SIZE)continue;
+    if(gridData[nr][nc].district!==d)continue;
+    if(riverOk(nr,nc,r,c))return true;
+  }
+  return false;
+}
 
-// ─── SIDEBAR ────────────────────────────────────────────────────────────────
-function buildDistrictSidebar() {
-  const list = document.getElementById('district-list');
-  list.innerHTML = '';
-  for (let d = 1; d <= NUM_DISTRICTS; d++) {
-    const btn = document.createElement('button');
-    btn.className = 'district-btn' + (d === selectedDistrict ? ' active' : '');
-    btn.id = `dbtn-${d}`;
-    btn.style.color = DISTRICT_COLORS[d];
-    btn.onclick = () => selectDistrict(d);
-    btn.innerHTML = `
-      <div class="swatch" style="background:${DISTRICT_COLORS[d]}"></div>
-      <div class="info">
-        <span class="dname">${DISTRICT_NAMES[d]}</span>
-        <span class="dcount" id="dcount-${d}">0 voters</span>
-      </div>`;
+function bfsSize(d,exR,exC,sR,sC){
+  const vis=new Set(),q=[[sR,sC]],key=(r,c)=>r*100+c;
+  vis.add(key(sR,sC));
+  while(q.length){const[r,c]=q.shift();for(const[nr,nc]of[[r-1,c],[r+1,c],[r,c-1],[r,c+1]]){if(nr<0||nr>=GRID_SIZE||nc<0||nc>=GRID_SIZE)continue;if(nr===exR&&nc===exC)continue;const k=key(nr,nc);if(!vis.has(k)&&gridData[nr][nc].district===d){vis.add(k);q.push([nr,nc]);}}}
+  return vis.size;
+}
+function remOk(r,c){
+  const d=gridData[r][c].district;if(d===0)return true;
+  let tot=0,fR=-1,fC=-1;
+  for(let rr=0;rr<GRID_SIZE;rr++)for(let cc=0;cc<GRID_SIZE;cc++)if(gridData[rr][cc].district===d&&!(rr===r&&cc===c)){tot++;if(fR===-1){fR=rr;fC=cc;}}
+  if(tot===0)return true;
+  return bfsSize(d,r,c,fR,fC)===tot;
+}
+function addOk(r,c,d){
+  let has=false;
+  for(let rr=0;rr<GRID_SIZE&&!has;rr++)for(let cc=0;cc<GRID_SIZE&&!has;cc++)if(gridData[rr][cc].district===d)has=true;
+  if(!has)return true;
+  for(const[nr,nc]of[[r-1,c],[r+1,c],[r,c-1],[r,c+1]])if(nr>=0&&nr<GRID_SIZE&&nc>=0&&nc<GRID_SIZE&&gridData[nr][nc].district===d)return true;
+  return false;
+}
+
+function loadScenario(idx){
+  currentScenario=idx;
+  document.querySelectorAll('.scenario-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  const sc=SCENARIOS[idx];
+  riverRulesActive=sc.riverRules;
+  document.getElementById('scenario-title').textContent=sc.title;
+  document.getElementById('scenario-desc').textContent=sc.desc;
+  gridData=sc.grid.map(row=>row.map(c=>({...c,races:c.races.map(r=>({...r})),district:0})));
+  for(let d=1;d<=NUM_DISTRICTS;d++)districtToastShown[d]=false;
+  renderGrid();buildDistrictSidebar();updateStats();
+  document.getElementById('analysis-grid').innerHTML='<div style="font-size:0.75rem;color:var(--muted);grid-column:1/-1">Draw districts then click <strong style="color:var(--text)">Analyze</strong>.</div>';
+  document.getElementById('balance-badge').innerHTML='';
+  if(idx===2)setTimeout(()=>showInfoToast('⚡ <strong>Gerrymandering mode:</strong> River crossing restrictions are <strong>OFF</strong>. Draw freely to explore how boundaries can be manipulated!'),400);
+}
+
+function init(){loadScenario(0);showTutorial();}
+
+function buildDistrictSidebar(){
+  const list=document.getElementById('district-list');list.innerHTML='';
+  for(let d=1;d<=NUM_DISTRICTS;d++){
+    const btn=document.createElement('button');
+    btn.className='district-btn'+(d===selectedDistrict?' active':'');
+    btn.id=`dbtn-${d}`;btn.style.color=DISTRICT_COLORS[d];btn.onclick=()=>selectDistrict(d);
+    btn.innerHTML=`<div class="swatch" style="background:${DISTRICT_COLORS[d]}"></div><div class="info"><span class="dname">${DISTRICT_NAMES[d]}</span><span class="dcount" id="dcount-${d}">0 voters</span></div>`;
     list.appendChild(btn);
   }
 }
+function selectDistrict(d){selectedDistrict=d;document.querySelectorAll('.district-btn').forEach((b,i)=>b.classList.toggle('active',i+1===d));document.getElementById('eraser-btn').classList.remove('active');}
+function selectEraser(){selectedDistrict=0;document.querySelectorAll('.district-btn').forEach(b=>b.classList.remove('active'));document.getElementById('eraser-btn').classList.add('active');}
 
-function selectDistrict(d) {
-  selectedDistrict = d;
-  document.querySelectorAll('.district-btn').forEach((b,i) => b.classList.toggle('active', i+1===d));
-  document.getElementById('eraser-btn').classList.remove('active');
-}
-
-function selectEraser() {
-  selectedDistrict = 0;
-  document.querySelectorAll('.district-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('eraser-btn').classList.add('active');
-}
-
-// ─── GRID RENDER ─────────────────────────────────────────────────────────────
-function renderGrid() {
-  const container = document.getElementById('grid-container');
-  container.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 52px)`;
-  container.innerHTML = '';
-
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
-      const cd = gridData[r][c];
-      const el = document.createElement('div');
-      el.className = 'cell' + (cd.district > 0 ? ' assigned' : '');
-      el.id = `cell-${r}-${c}`;
-
-      const bg = cd.district > 0
-        ? hexWithAlpha(DISTRICT_COLORS[cd.district], 0.35)
-        : '#1e2130';
-      const borderColor = cd.district > 0 ? DISTRICT_COLORS[cd.district] : 'transparent';
-
-      el.style.background = bg;
-      el.style.borderColor = borderColor;
-
-      // Voter count
-      const vc = document.createElement('div');
-      vc.className = 'voter-count';
-      vc.style.color = cd.district > 0 ? '#fff' : '#9ca3af';
-      vc.textContent = cd.voters;
-      el.appendChild(vc);
-
-      // Race dots
-      const dotRow = document.createElement('div');
-      dotRow.className = 'race-dot-row';
-      cd.races.forEach(race => {
-        for (let i = 0; i < race.count; i++) {
-          const dot = document.createElement('div');
-          dot.className = 'race-dot';
-          dot.style.background = race.color;
-          dotRow.appendChild(dot);
-        }
-      });
-      el.appendChild(dotRow);
-
-      // Events
-      el.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        painting = true;
-        isDragging = false;
-        // Decide what district to paint for this whole drag stroke
-        const cd2 = gridData[r][c];
-        if (selectedDistrict === 0) {
-          paintStartDistrict = 0;
-        } else if (cd2.district === selectedDistrict) {
-          paintStartDistrict = 0; // will deselect on drag too
-        } else {
-          paintStartDistrict = selectedDistrict;
-        }
-        paintCell(r, c, true);
-      });
-      el.addEventListener('mouseenter', () => {
-        if (painting) { isDragging = true; paintCell(r, c, false); }
-        showTooltip(r, c, el);
-      });
-      el.addEventListener('mouseleave', () => hideTooltip());
-
-      container.appendChild(el);
+function renderGrid(){
+  const con=document.getElementById('grid-container');
+  con.style.gridTemplateColumns=`repeat(${GRID_SIZE},52px)`;
+  con.innerHTML='';
+  for(let r=0;r<GRID_SIZE;r++)for(let c=0;c<GRID_SIZE;c++){
+    const cd=gridData[r][c],k=cellKind(r,c);
+    const el=document.createElement('div');
+    el.id=`cell-${r}-${c}`;
+    if(k==='r'){
+      el.className='cell river-cell';
+      el.style.background='#1a3a5c';
+      el.style.borderColor='#2a6090';
+      el.innerHTML='<div style="font-size:1rem;line-height:1;">〰</div>';
+      el.addEventListener('mouseenter',()=>{const tt=document.getElementById('tooltip');tt.innerHTML='🌊 <strong>River</strong><br>Cannot draw here';tt.classList.add('visible');});
+      el.addEventListener('mouseleave',()=>document.getElementById('tooltip').classList.remove('visible'));
+      con.appendChild(el);continue;
     }
-  }
-
-  document.addEventListener('mouseup', () => painting = false);
-}
-
-function hexWithAlpha(hex, alpha) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-let paintStartDistrict = null;  // district value we're painting in this drag stroke
-let isDragging = false;
-
-function paintCell(r, c, isClick) {
-  const cd = gridData[r][c];
-  if (isClick) {
-    // Toggle: if same district already assigned, deselect; otherwise assign
-    if (selectedDistrict === 0) {
-      cd.district = 0;
-    } else if (cd.district === selectedDistrict) {
-      cd.district = 0;
+    if(k==='b'){
+      el.className='cell bridge-cell'+(cd.district>0?' assigned':'');
+      el.style.background=cd.district>0?hexA(DISTRICT_COLORS[cd.district],0.45):'#2d2010';
+      el.style.borderColor=cd.district>0?DISTRICT_COLORS[cd.district]:'#c8a45a';
+      el.innerHTML=`<div style="font-size:1.3rem;line-height:1;">🌉</div><div class="bridge-label" style="color:#c8a45a;font-size:0.42rem;letter-spacing:0.05em;text-transform:uppercase;margin-top:2px;">bridge</div>`;
     } else {
-      cd.district = selectedDistrict;
+      el.className='cell'+(cd.district>0?' assigned':'');
+      el.style.background=cd.district>0?hexA(DISTRICT_COLORS[cd.district],0.35):'#1e2130';
+      el.style.borderColor=cd.district>0?DISTRICT_COLORS[cd.district]:'transparent';
+      const vc=document.createElement('div');vc.className='voter-count';vc.style.color=cd.district>0?'#fff':'#9ca3af';vc.textContent=cd.voters;
+      const dr=document.createElement('div');dr.className='race-dot-row';
+      cd.races.forEach(race=>{for(let i=0;i<race.count;i++){const dot=document.createElement('div');dot.className='race-dot';dot.style.background=race.color;dr.appendChild(dot);}});
+      el.appendChild(vc);el.appendChild(dr);
     }
-  } else {
-    // Dragging: use the district we decided on mousedown
-    cd.district = paintStartDistrict;
+    el.addEventListener('mousedown',(e)=>{
+      if(e.button!==0)return;e.preventDefault();painting=true;
+      const cur=gridData[r][c].district;
+      if(selectedDistrict===0&&cur===0){showNudge('← Select a district first, then paint cells');painting=false;return;}
+      paintStartDistrict=(selectedDistrict===0||cur===selectedDistrict)?0:selectedDistrict;
+      applyPaint(r,c);
+    });
+    el.addEventListener('mouseenter',()=>{if(painting)applyPaint(r,c);showTip(r,c);});
+    el.addEventListener('mouseleave',()=>document.getElementById('tooltip').classList.remove('visible'));
+    el.addEventListener('contextmenu',(e)=>{e.preventDefault();e.stopPropagation();openCtx(e,r,c);});
+    con.appendChild(el);
   }
-  updateCellVisual(r, c);
-  updateStats();
+  document.addEventListener('mouseup',()=>{painting=false;});
 }
 
-function updateCellVisual(r, c) {
-  const cd = gridData[r][c];
-  const el = document.getElementById(`cell-${r}-${c}`);
-  if (!el) return;
-
-  el.className = 'cell' + (cd.district > 0 ? ' assigned' : '');
-  el.style.background = cd.district > 0
-    ? hexWithAlpha(DISTRICT_COLORS[cd.district], 0.35)
-    : '#1e2130';
-  el.style.borderColor = cd.district > 0 ? DISTRICT_COLORS[cd.district] : 'transparent';
-  el.querySelector('.voter-count').style.color = cd.district > 0 ? '#fff' : '#9ca3af';
-}
-
-// ─── TOAST NOTIFICATIONS ─────────────────────────────────────────────────────
-const districtToastShown = {};  // tracks which districts have had their "balanced!" toast shown
-
-function showToast(msg, type = 'toast-success') {
-  const container = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = msg;
-  container.appendChild(el);
-  setTimeout(() => {
-    el.classList.add('toast-close');
-    el.addEventListener('animationend', () => el.remove());
-  }, 3200);
-}
-
-// ─── STATS ───────────────────────────────────────────────────────────────────
-// Returns the next district (after `current`) that hasn't been toasted as balanced yet.
-// Wraps around; returns null if all districts are balanced.
-function findNextDistrict(current) {
-  for (let offset = 1; offset <= NUM_DISTRICTS; offset++) {
-    const next = ((current - 1 + offset) % NUM_DISTRICTS) + 1;
-    if (!districtToastShown[next]) return next;
+function applyPaint(r,c){
+  const cd=gridData[r][c],k=cellKind(r,c);
+  if(k==='r')return;
+  const newD=paintStartDistrict;
+  if(newD===cd.district)return;
+  if(selectedDistrict===0&&cd.district===0){showNudge('← Select a district first, then paint cells');return;}
+  if(cd.district!==0&&!remOk(r,c)){flash(r,c);return;}
+  if(newD!==0){
+    if(!addOk(r,c,newD)){flash(r,c);return;}
+    if(!riverAllowsAdd(r,c,newD)){flash(r,c);showNudge('🌊 Districts can only cross the river at bridges!');return;}
   }
-  return null; // all done
+  cd.district=newD;refreshCell(r,c);updateStats();
 }
 
-function updateStats() {
-  const total = GRID_SIZE * GRID_SIZE;
-  let assigned = 0;
-  let totalVoters = 0;
-  let assignedVoters = 0;
-  const districtVoters = new Array(NUM_DISTRICTS + 1).fill(0);
-
-  for (let r = 0; r < GRID_SIZE; r++) for (let c = 0; c < GRID_SIZE; c++) {
-    const cd = gridData[r][c];
-    totalVoters += cd.voters;
-    if (cd.district > 0) {
-      assigned++;
-      assignedVoters += cd.voters;
-      districtVoters[cd.district] += cd.voters;
-    }
-  }
-
-  document.getElementById('stat-assigned').textContent = `${assigned} / ${total}`;
-  document.getElementById('stat-total-voters').textContent = totalVoters.toLocaleString();
-  document.getElementById('stat-assigned-voters').textContent = assignedVoters.toLocaleString();
-  document.getElementById('stat-progress').style.width = `${(assigned/total)*100}%`;
-
-  // Ideal per-district voter count = totalVoters / NUM_DISTRICTS
-  const ideal = totalVoters / NUM_DISTRICTS;
-
-  for (let d = 1; d <= NUM_DISTRICTS; d++) {
-    const el = document.getElementById(`dcount-${d}`);
-    if (el) el.textContent = `${districtVoters[d].toLocaleString()} voters`;
-
-    if (districtVoters[d] > 0 && ideal > 0) {
-      const dev = Math.abs(districtVoters[d] - ideal) / ideal;
-      const wasBalanced = districtToastShown[d];
-      const isNowBalanced = dev <= 0.05; // within 5% of ideal
-
-      if (isNowBalanced && !wasBalanced) {
-        districtToastShown[d] = true;
-        const color = DISTRICT_COLORS[d];
-        showToast(
-          `<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${color};margin-right:4px;vertical-align:middle"></span>` +
-          `${DISTRICT_NAMES[d]} is balanced! ✓ (~${Math.round(districtVoters[d]).toLocaleString()} voters)`,
-          'toast-success'
-        );
-        // Auto-advance to the next unfinished district
-        const nextDistrict = findNextDistrict(d);
-        if (nextDistrict !== null) {
-          setTimeout(() => selectDistrict(nextDistrict), 300);
-        }
-      } else if (!isNowBalanced && wasBalanced) {
-        // District was balanced but is no longer — reset so toast can re-fire
-        districtToastShown[d] = false;
-      }
-    } else {
-      // District emptied out — reset toast state
-      districtToastShown[d] = false;
-    }
-  }
+function flash(r,c){
+  const el=document.getElementById(`cell-${r}-${c}`);if(!el)return;
+  const orig=el.style.background;
+  el.style.background=hexA('#ef4444',0.6);el.style.transform='scale(1.12)';
+  setTimeout(()=>{el.style.background=orig;el.style.transform='';},380);
 }
 
-// ─── TOOLTIP ─────────────────────────────────────────────────────────────────
-function showTooltip(r, c, el) {
-  const cd = gridData[r][c];
-  const tt = document.getElementById('tooltip');
-  const raceSummary = cd.races.map(race => {
-    const name = Object.entries(RACE_COLORS).find(([,v])=>v===race.color)?.[0] || 'unknown';
-    return `${name}: ${race.count} dot${race.count>1?'s':''}`;
-  }).join('<br>');
-  const distName = cd.district > 0 ? DISTRICT_NAMES[cd.district] : 'Unassigned';
-  tt.innerHTML = `<strong>${cd.voters} voters</strong><br>${distName}<br><br>${raceSummary}`;
-  tt.classList.add('visible');
-  moveTT();
-}
-function hideTooltip() { document.getElementById('tooltip').classList.remove('visible'); }
-function moveTT(e) {
-  const tt = document.getElementById('tooltip');
-  if (!e) return;
-  tt.style.left = (e.clientX + 14) + 'px';
-  tt.style.top = (e.clientY + 14) + 'px';
-}
-document.addEventListener('mousemove', moveTT);
-
-// ─── COMPACTNESS ─────────────────────────────────────────────────────────────
-// Polsby-Popper score on a grid: area = cells, perimeter = exposed edges between
-// district cells and non-district cells (or grid boundary).
-// Score = (4π × area) / perimeter² — ranges 0 (gerrymandered) to 1 (perfect circle)
-// On a grid we approximate π→1 for a normalized 0–1 score that's still meaningful.
-function computeCompactness(districtId) {
-  let area = 0;
-  let perimeter = 0;
-  for (let r = 0; r < GRID_SIZE; r++) {
-    for (let c = 0; c < GRID_SIZE; c++) {
-      if (gridData[r][c].district !== districtId) continue;
-      area++;
-      const neighbors = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
-      neighbors.forEach(([nr,nc]) => {
-        const outOfBounds = nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE;
-        const otherDistrict = !outOfBounds && gridData[nr][nc].district !== districtId;
-        if (outOfBounds || otherDistrict) perimeter++;
-      });
-    }
-  }
-  if (area === 0 || perimeter === 0) return null;
-  // Polsby-Popper: (4π × A) / P²
-  const score = (4 * Math.PI * area) / (perimeter * perimeter);
-  return Math.min(1, score); // cap at 1
-}
-
-function compactnessLabel(score) {
-  if (score === null) return { label: 'N/A', color: '#6b7280' };
-  if (score >= 0.7) return { label: 'Very Compact', color: '#4ade80' };
-  if (score >= 0.45) return { label: 'Compact', color: '#86efac' };
-  if (score >= 0.25) return { label: 'Irregular', color: '#f0b429' };
-  return { label: 'Gerrymandered', color: '#ef4444' };
-}
-
-
-function analyzeDistricts() {
-  const analysis = {};
-  for (let d = 1; d <= NUM_DISTRICTS; d++) {
-    analysis[d] = { voters: 0, cells: 0, races: {} };
-  }
-  let totalVoters = 0;
-
-  for (let r = 0; r < GRID_SIZE; r++) for (let c = 0; c < GRID_SIZE; c++) {
-    const cd = gridData[r][c];
-    totalVoters += cd.voters;
-    if (cd.district > 0) {
-      analysis[cd.district].voters += cd.voters;
-      analysis[cd.district].cells++;
-      cd.races.forEach(race => {
-        const name = Object.entries(RACE_COLORS).find(([,v])=>v===race.color)?.[0] || 'other';
-        analysis[cd.district].races[name] = (analysis[cd.district].races[name] || 0) + race.count;
-      });
-    }
-  }
-
-  const usedDistricts = Object.values(analysis).filter(d => d.voters > 0);
-  if (usedDistricts.length === 0) {
-    document.getElementById('analysis-grid').innerHTML = '<div style="font-size:0.75rem;color:var(--muted);grid-column:1/-1">No districts drawn yet. Paint some cells first!</div>';
+function refreshCell(r,c){
+  const cd=gridData[r][c],el=document.getElementById(`cell-${r}-${c}`),k=cellKind(r,c);
+  if(!el||k==='r')return;
+  if(k==='b'){
+    el.className='cell bridge-cell'+(cd.district>0?' assigned':'');
+    el.style.background=cd.district>0?hexA(DISTRICT_COLORS[cd.district],0.45):'#2d2010';
+    el.style.borderColor=cd.district>0?DISTRICT_COLORS[cd.district]:'#c8a45a';
     return;
   }
+  el.className='cell'+(cd.district>0?' assigned':'');
+  el.style.background=cd.district>0?hexA(DISTRICT_COLORS[cd.district],0.35):'#1e2130';
+  el.style.borderColor=cd.district>0?DISTRICT_COLORS[cd.district]:'transparent';
+  const vc=el.querySelector('.voter-count');if(vc)vc.style.color=cd.district>0?'#fff':'#9ca3af';
+}
 
-  const avgVoters = usedDistricts.reduce((s,d) => s+d.voters, 0) / usedDistricts.length;
-  const maxDev = Math.max(...usedDistricts.map(d => Math.abs(d.voters - avgVoters) / avgVoters));
-  const isBalanced = maxDev < 0.15;
+let ctxJustOpened=false;
+function openCtx(e,r,c){
+  if(cellKind(r,c)==='r')return;
+  ctxRow=r;ctxCol=c;
+  const items=document.getElementById('ctx-district-items');items.innerHTML='';
+  for(let d=1;d<=NUM_DISTRICTS;d++){
+    const it=document.createElement('div');it.className='ctx-item';
+    const cur=gridData[r][c].district===d;
+    it.innerHTML=`<div class="ctx-swatch" style="background:${DISTRICT_COLORS[d]}"></div>${DISTRICT_NAMES[d]}${cur?' ✓':''}`;
+    it.onclick=(()=>{const dd=d;return()=>ctxSet(dd);})();
+    items.appendChild(it);
+  }
+  document.getElementById('ctx-unassign').onclick=()=>ctxSet(0);
+  const m=document.getElementById('ctx-menu');
+  m.style.left=Math.min(e.clientX,window.innerWidth-190)+'px';
+  m.style.top=Math.min(e.clientY,window.innerHeight-240)+'px';
+  m.classList.add('visible');
+  ctxJustOpened=true;
+  // Use a short timeout so the flag is cleared after the event bubbles
+  setTimeout(()=>{ctxJustOpened=false;},50);
+}
+function ctxSet(d){
+  document.getElementById('ctx-menu').classList.remove('visible');
+  if(ctxRow===null)return;
+  const r=ctxRow,c=ctxCol,cd=gridData[r][c];
+  if(d===cd.district)return;
+  if(cd.district!==0&&!remOk(r,c)){flash(r,c);return;}
+  if(d!==0){if(!addOk(r,c,d)){flash(r,c);return;}if(!riverAllowsAdd(r,c,d)){flash(r,c);showNudge('🌊 Districts can only cross the river at bridges!');return;}}
+  cd.district=d;refreshCell(r,c);updateStats();
+}
+document.addEventListener('click',()=>{ if(!ctxJustOpened) document.getElementById('ctx-menu').classList.remove('visible'); });
 
-  // Badge
-  const badge = document.getElementById('balance-badge');
-  badge.innerHTML = isBalanced
-    ? '<span class="ok-badge">✓ Balanced populations</span>'
-    : '<span class="warning-badge">⚠ Unequal populations</span>';
+function updateStats(){
+  let assignable=0,assigned=0,totalV=0,assignedV=0;
+  const dv=new Array(NUM_DISTRICTS+1).fill(0);
+  const raceDots={white:0,black:0,hispanic:0,asian:0};
+  for(let r=0;r<GRID_SIZE;r++)for(let c=0;c<GRID_SIZE;c++){
+    if(cellKind(r,c)==='r')continue;
+    const cd=gridData[r][c];totalV+=cd.voters;assignable++;
+    cd.races.forEach(race=>{
+      const n=Object.entries(RACE_COLORS).find(([,v])=>v===race.color)?.[0];
+      if(n)raceDots[n]=(raceDots[n]||0)+race.count;
+    });
+    if(cd.district>0){assigned++;assignedV+=cd.voters;dv[cd.district]+=cd.voters;}
+  }
+  document.getElementById('stat-assigned').textContent=`${assigned}/${assignable}`;
+  document.getElementById('stat-total-voters').textContent=totalV.toLocaleString();
+  document.getElementById('stat-assigned-voters').textContent=assignedV.toLocaleString();
+  document.getElementById('stat-progress').style.width=`${(assigned/assignable)*100}%`;
+  const ideal=totalV/NUM_DISTRICTS;
+  document.getElementById('stat-ideal').textContent=Math.round(ideal).toLocaleString();
 
-  // Cards
-  const grid = document.getElementById('analysis-grid');
-  grid.innerHTML = '';
-  for (let d = 1; d <= NUM_DISTRICTS; d++) {
-    if (analysis[d].cells === 0) continue;
-    const da = analysis[d];
-    const pct = totalVoters > 0 ? ((da.voters / totalVoters) * 100).toFixed(1) : 0;
-    const devPct = avgVoters > 0 ? (((da.voters - avgVoters) / avgVoters) * 100).toFixed(1) : 0;
-    const devColor = Math.abs(devPct) < 10 ? '#4ade80' : Math.abs(devPct) < 20 ? '#f0b429' : '#ef4444';
+  // Race key percentages
+  const totalDots=Object.values(raceDots).reduce((a,b)=>a+b,0)||1;
+  for(const race of['white','black','hispanic','asian']){
+    const el=document.getElementById(`rpct-${race}`);
+    if(el)el.textContent=`${Math.round((raceDots[race]||0)/totalDots*100)}%`;
+  }
 
-    // Dominant race
-    const topRace = Object.entries(da.races).sort((a,b)=>b[1]-a[1])[0];
-    const raceName = topRace ? topRace[0] : 'mixed';
-    const raceColor = RACE_COLORS[raceName] || '#888';
+  for(let d=1;d<=NUM_DISTRICTS;d++){
+    const el=document.getElementById(`dcount-${d}`);if(el)el.textContent=`${dv[d].toLocaleString()} voters`;
+    if(dv[d]>0&&ideal>0){
+      const dev=Math.abs(dv[d]-ideal)/ideal;
+      if(dev<=0.05&&!districtToastShown[d]){districtToastShown[d]=true;const nx=findNextD(d);pendingNextDistrict=nx;showBalModal(d,dv[d],ideal,nx);}
+      else if(dev>0.05&&districtToastShown[d])districtToastShown[d]=false;
+    } else districtToastShown[d]=false;
+  }
+}
+function findNextD(cur){for(let o=1;o<=NUM_DISTRICTS;o++){const n=((cur-1+o)%NUM_DISTRICTS)+1;if(!districtToastShown[n])return n;}return null;}
 
-    const compScore = computeCompactness(d);
-    const compRating = compactnessLabel(compScore);
-    const compPct = compScore !== null ? Math.round(compScore * 100) : 0;
+function showBalModal(d,voters,ideal,nextD){
+  const color=DISTRICT_COLORS[d],devPct=Math.abs((voters-ideal)/ideal*100).toFixed(1);
+  document.getElementById('modal-title').textContent=`${DISTRICT_NAMES[d]} Balanced!`;
+  const badge=document.getElementById('modal-badge');
+  badge.style.cssText=`color:${color};border-color:${color};background:${hexA(color,0.12)};display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:20px;font-weight:700;font-size:0.8rem;border:2px solid;`;
+  badge.innerHTML=`<div style="width:10px;height:10px;border-radius:3px;background:${color}"></div>${voters.toLocaleString()} voters &bull; ${devPct}% from ideal`;
+  document.getElementById('modal-sub').innerHTML=`This district is within 5% of the ideal (<strong style="color:var(--text)">${Math.round(ideal).toLocaleString()}</strong>), satisfying the <strong style="color:var(--text)">"one person, one vote"</strong> principle!`;
+  document.getElementById('modal-next').innerHTML=nextD?`Next up: <strong style="color:${DISTRICT_COLORS[nextD]}">${DISTRICT_NAMES[nextD]}</strong> will be selected when you close this.`:`🏆 All balanced! Click <strong style="color:var(--text)">Analyze ▶</strong> to see your results.`;
+  document.getElementById('balance-overlay').classList.add('visible');
+}
+function closeBalanceModal(){
+  document.getElementById('balance-overlay').classList.remove('visible');
+  if(pendingNextDistrict!==null){selectDistrict(pendingNextDistrict);pendingNextDistrict=null;}
+}
 
-    const card = document.createElement('div');
-    card.className = 'analysis-card';
-    card.style.borderLeftColor = DISTRICT_COLORS[d];
-    card.innerHTML = `
-      <div class="card-name">${DISTRICT_NAMES[d]}</div>
-      <div class="card-votes">${da.voters.toLocaleString()}</div>
-      <div class="card-pct">${pct}% of total • <span style="color:${devColor}">${devPct > 0 ? '+' : ''}${devPct}%</span></div>
-      <div style="margin-top:6px;font-size:0.62rem;color:var(--muted)">
-        Dominant: <span style="color:${raceColor}">${raceName}</span>
-      </div>
-      <div style="margin-top:6px;font-size:0.62rem;color:var(--muted)">
-        Compactness: <span style="color:${compRating.color};font-weight:700">${compRating.label}</span>
-        <span style="color:var(--muted)"> (${compPct}%)</span>
-      </div>
-      <div class="mini-bar" style="margin-top:4px">
-        <div class="mini-bar-fill" style="background:${compRating.color};width:${compPct}%"></div>
-      </div>
-      <div class="mini-bar" style="margin-top:3px">
-        <div class="mini-bar-fill" style="background:${DISTRICT_COLORS[d]};width:${pct}%"></div>
-      </div>`;
+function showTutorial(){document.getElementById('tutorial-overlay').classList.add('visible');}
+function closeTutorial(){document.getElementById('tutorial-overlay').classList.remove('visible');}
+
+function showTip(r,c){
+  const k=cellKind(r,c),cd=gridData[r][c],tt=document.getElementById('tooltip');
+  if(k==='r'){tt.innerHTML='🌊 <strong>River</strong><br>Cannot draw here';tt.classList.add('visible');return;}
+  if(k==='b'){tt.innerHTML='🌉 <strong>Bridge</strong><br>'+(cd.district>0?DISTRICT_NAMES[cd.district]:'Unassigned')+'<br><span style="color:#c8a45a;font-size:0.65rem;">Districts can cross here</span>';tt.classList.add('visible');return;}
+  const rs=cd.races.map(race=>{const n=Object.entries(RACE_COLORS).find(([,v])=>v===race.color)?.[0]||'?';return`${n}: ${race.count}`;}).join('<br>');
+  tt.innerHTML=`<strong>${cd.voters} voters</strong><br>${cd.district>0?DISTRICT_NAMES[cd.district]:'Unassigned'}<br><br>${rs}`;
+  tt.classList.add('visible');
+}
+document.addEventListener('mousemove',(e)=>{const tt=document.getElementById('tooltip');tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY+14)+'px';});
+
+function compScore(d){
+  let a=0,p=0;
+  for(let r=0;r<GRID_SIZE;r++)for(let c=0;c<GRID_SIZE;c++){
+    if(gridData[r][c].district!==d)continue;a++;
+    for(const[nr,nc]of[[r-1,c],[r+1,c],[r,c-1],[r,c+1]])if(nr<0||nr>=GRID_SIZE||nc<0||nc>=GRID_SIZE||gridData[nr][nc].district!==d)p++;
+  }
+  if(!a||!p)return null;
+  return Math.min(1,(4*Math.PI*a)/(p*p));
+}
+function compLbl(s){
+  if(s===null)return{l:'N/A',c:'#6b7280'};
+  if(s>=0.7)return{l:'Very Compact',c:'#4ade80'};
+  if(s>=0.45)return{l:'Compact',c:'#86efac'};
+  if(s>=0.25)return{l:'Irregular',c:'#f0b429'};
+  return{l:'Gerrymandered',c:'#ef4444'};
+}
+
+function analyzeDistricts(){
+  const an={};for(let d=1;d<=NUM_DISTRICTS;d++)an[d]={voters:0,cells:0,races:{}};
+  let totalV=0,trd={white:0,black:0,hispanic:0,asian:0};
+  for(let r=0;r<GRID_SIZE;r++)for(let c=0;c<GRID_SIZE;c++){
+    if(cellKind(r,c)==='r')continue;
+    const cd=gridData[r][c];totalV+=cd.voters;
+    cd.races.forEach(race=>{const n=Object.entries(RACE_COLORS).find(([,v])=>v===race.color)?.[0]||'o';trd[n]=(trd[n]||0)+race.count;});
+    if(cd.district>0){an[cd.district].voters+=cd.voters;an[cd.district].cells++;cd.races.forEach(race=>{const n=Object.entries(RACE_COLORS).find(([,v])=>v===race.color)?.[0]||'o';an[cd.district].races[n]=(an[cd.district].races[n]||0)+race.count;});}
+  }
+  const used=Object.values(an).filter(d=>d.voters>0);
+  if(!used.length){document.getElementById('analysis-grid').innerHTML='<div style="font-size:0.75rem;color:var(--muted);grid-column:1/-1">No districts drawn yet.</div>';return;}
+  const avg=used.reduce((s,d)=>s+d.voters,0)/used.length;
+  const bal=Math.max(...used.map(d=>Math.abs(d.voters-avg)/avg))<0.15;
+  document.getElementById('balance-badge').innerHTML=bal?'<span class="ok-badge">✓ Balanced</span>':'<span class="warning-badge">⚠ Unequal</span>';
+  const grid=document.getElementById('analysis-grid');grid.innerHTML='';
+  const dcs={};
+  for(let d=1;d<=NUM_DISTRICTS;d++){
+    if(!an[d].cells)continue;
+    const da=an[d],pct=((da.voters/totalV)*100).toFixed(1),devP=(((da.voters-avg)/avg)*100).toFixed(1);
+    const dCol=Math.abs(devP)<10?'#4ade80':Math.abs(devP)<20?'#f0b429':'#ef4444';
+    const top=Object.entries(da.races).sort((a,b)=>b[1]-a[1])[0],rName=top?top[0]:'n/a',rCol=RACE_COLORS[rName]||'#888';
+    const cs=compScore(d);dcs[d]=cs;const cr=compLbl(cs),cpct=cs!=null?Math.round(cs*100):0;
+    const card=document.createElement('div');card.className='analysis-card';card.style.borderLeftColor=DISTRICT_COLORS[d];
+    card.innerHTML=`<div class="card-name">${DISTRICT_NAMES[d]}</div><div class="card-votes">${da.voters.toLocaleString()}</div><div class="card-pct">${pct}% &bull; <span style="color:${dCol}">${devP>0?'+':''}${devP}%</span></div><div style="margin-top:6px;font-size:0.62rem;color:var(--muted)">Dominant: <span style="color:${rCol}">${rName}</span></div><div style="margin-top:6px;font-size:0.62rem;color:var(--muted)">Compactness: <span style="color:${cr.c};font-weight:700">${cr.l}</span> (${cpct}%)</div><div class="mini-bar" style="margin-top:4px"><div class="mini-bar-fill" style="background:${cr.c};width:${cpct}%"></div></div><div class="mini-bar" style="margin-top:3px"><div class="mini-bar-fill" style="background:${DISTRICT_COLORS[d]};width:${pct}%"></div></div>`;
     grid.appendChild(card);
   }
-
-  // Teaching note
-  const note = document.createElement('div');
-  note.style = 'grid-column:1/-1;font-size:0.68rem;color:var(--muted);margin-top:6px;line-height:1.7;border-top:1px solid var(--border);padding-top:12px;';
-  if (!isBalanced) {
-    note.innerHTML = `<strong style="color:#f0b429">⚠ Population Imbalance:</strong> Districts with very different voter counts give some voters more influence than others. The legal standard in the U.S. requires districts to be roughly equal in population — this is called "one person, one vote." Also check the <strong style="color:var(--text)">compactness score</strong> — low scores (under 25%) can signal gerrymandering.`;
-  } else {
-    note.innerHTML = `<strong style="color:#4ade80">✓ Well balanced!</strong> Your districts have roughly equal populations, satisfying the "one person, one vote" principle. Check each district's <strong style="color:var(--text)">compactness score</strong> — a Polsby-Popper score near 100% means the district has a regular, compact shape, while low scores (jagged, stretched shapes) are a classic sign of gerrymandering.`;
+  // Verdict
+  const vd=document.createElement('div');vd.style='grid-column:1/-1;margin-top:10px;';
+  const csa=Object.values(dcs).filter(s=>s!=null);
+  const avgC=csa.length?csa.reduce((a,b)=>a+b,0)/csa.length:null;
+  const gerry=Object.entries(dcs).filter(([,s])=>s!=null&&s<0.25);
+  const irreg=Object.entries(dcs).filter(([,s])=>s!=null&&s>=0.25&&s<0.45);
+  const cOk=avgC!=null&&avgC>=0.45;
+  const totD=Object.values(trd).reduce((a,b)=>a+b,0)||1;
+  const mrs={};for(const[race,dots]of Object.entries(trd))mrs[race]=dots/totD;
+  const rf={};
+  for(const race of['black','hispanic','asian']){
+    const ms=mrs[race]||0;if(ms<0.05)continue;
+    const sh=[];for(let d=1;d<=NUM_DISTRICTS;d++){if(!an[d].cells)continue;const tot=Object.values(an[d].races).reduce((a,b)=>a+b,0)||1;sh.push((an[d].races[race]||0)/tot);}
+    rf[race]={mapShare:ms,dominated:sh.filter(s=>s>0.4).length,diluted:sh.filter(s=>s<0.05).length,n:sh.length};
   }
-  grid.appendChild(note);
+  let v=`<div style="border-top:1px solid var(--border);padding-top:16px;display:flex;flex-direction:column;gap:12px;">`;
+  v+=`<div style="font-family:'Oswald',sans-serif;font-size:0.9rem;font-weight:800;margin-bottom:2px;">⚖️ Fairness Verdict</div>`;
+  // Population
+  v+=`<div style="background:var(--bg);border-radius:9px;padding:12px 14px;border-left:3px solid ${bal?'#4ade80':'#f0b429'}"><div style="font-size:0.72rem;font-weight:700;color:${bal?'#4ade80':'#f0b429'};margin-bottom:5px;">${bal?'✓':'⚠'} Population Balance</div>`;
+  if(bal)v+=`<div style="font-size:0.68rem;color:var(--muted);line-height:1.7;">All districts are within 15% of each other, satisfying <strong style="color:var(--text)">"one person, one vote"</strong> (U.S. constitutional standard). Courts require districts to be as equal in population as practicable.</div>`;
+  else{const wd=used.reduce((a,b)=>Math.abs(b.voters-avg)/avg>Math.abs(a.voters-avg)/avg?b:a),wp=Math.round(Math.abs(wd.voters-avg)/avg*100);v+=`<div style="font-size:0.68rem;color:var(--muted);line-height:1.7;">Some districts are off by more than 15%. Worst is <strong style="color:#ef4444">${wp}%</strong> from average. Under <em>Reynolds v. Sims</em> (1964) this map could be struck down. Aim for ~<strong style="color:var(--text)">${Math.round(avg).toLocaleString()}</strong> per district.</div>`;}
+  v+=`</div>`;
+  // Compactness
+  if(avgC!=null){
+    const cc=cOk?'#4ade80':gerry.length>=2?'#ef4444':'#f0b429',ap=Math.round(avgC*100);
+    v+=`<div style="background:var(--bg);border-radius:9px;padding:12px 14px;border-left:3px solid ${cc}"><div style="font-size:0.72rem;font-weight:700;color:${cc};margin-bottom:5px;">${cOk?'✓':'⚠'} Shape Compactness (Polsby-Popper)</div>`;
+    if(gerry.length>=2)v+=`<div style="font-size:0.68rem;color:var(--muted);line-height:1.7;"><strong style="color:#ef4444">${gerry.length} districts</strong> score below 25% — a strong gerrymandering indicator. Jagged, tentacle-shaped districts are a classic tool to "crack" communities across districts or "pack" them into one. Average: <strong style="color:${cc}">${ap}%</strong>.</div>`;
+    else if(irreg.length>=2)v+=`<div style="font-size:0.68rem;color:var(--muted);line-height:1.7;"><strong style="color:#f0b429">${irreg.length} districts</strong> have irregular shapes (25–45%). These often emerge when boundaries are drawn for partisan advantage. Average: <strong style="color:${cc}">${ap}%</strong>.</div>`;
+    else v+=`<div style="font-size:0.68rem;color:var(--muted);line-height:1.7;">Districts are reasonably compact (avg <strong style="color:#4ade80">${ap}%</strong>). Compact shapes suggest boundaries were not deliberately twisted to isolate communities.</div>`;
+    v+=`</div>`;
+  }
+  // Race
+  const re=Object.entries(rf);
+  if(re.length>0){
+    const any=re.some(([,f])=>f.diluted>f.n*0.5||f.dominated>=f.n-1),rc=any?'#f0b429':'#4ade80';
+    v+=`<div style="background:var(--bg);border-radius:9px;padding:12px 14px;border-left:3px solid ${rc}"><div style="font-size:0.72rem;font-weight:700;color:${rc};margin-bottom:5px;">${any?'⚠':'✓'} Racial Representation</div><div style="font-size:0.68rem;color:var(--muted);line-height:1.7;">`;
+    for(const[race,f]of re){
+      const rCol=RACE_COLORS[race]||'#888',mp=Math.round(f.mapShare*100);
+      const packed=f.dominated>=f.n-1&&f.n>1,cracked=f.diluted>f.n*0.5&&f.n>1;
+      const rv=packed?`<strong style="color:#ef4444">Packed</strong> — concentrated into too few districts, reducing overall influence.`:cracked?`<strong style="color:#ef4444">Cracked</strong> — spread too thinly, prevented from forming a majority anywhere.`:`<strong style="color:#4ade80">Proportional</strong> — distributed in a way that gives meaningful representation.`;
+      v+=`<div style="margin-bottom:7px;padding-bottom:7px;border-bottom:1px solid var(--border)"><span style="color:${rCol};font-weight:700">${race.charAt(0).toUpperCase()+race.slice(1)}</span> (~${mp}% of map): ${rv}</div>`;
+    }
+    v+=`<div style="margin-top:4px;font-size:0.65rem;">Under the <strong style="color:var(--text)">Voting Rights Act of 1965</strong>, maps that dilute minority voting power through packing or cracking can be challenged in federal court.</div></div></div>`;
+  }
+  v+=`</div>`;
+  vd.innerHTML=v;grid.appendChild(vd);
 }
 
-// ─── RESET ───────────────────────────────────────────────────────────────────
-function resetGrid() {
-  for (let r = 0; r < GRID_SIZE; r++) for (let c = 0; c < GRID_SIZE; c++) {
-    gridData[r][c].district = 0;
-    updateCellVisual(r, c);
-  }
+function resetGrid(){
+  for(let r=0;r<GRID_SIZE;r++)for(let c=0;c<GRID_SIZE;c++){gridData[r][c].district=0;refreshCell(r,c);}
+  for(let d=1;d<=NUM_DISTRICTS;d++)districtToastShown[d]=false;
   updateStats();
-  document.getElementById('analysis-grid').innerHTML = '<div style="font-size:0.75rem;color:var(--muted);grid-column:1/-1">Draw some districts, then click <strong style="color:var(--text)">Analyze</strong> to see the breakdown.</div>';
-  document.getElementById('balance-badge').innerHTML = '';
+  document.getElementById('analysis-grid').innerHTML='<div style="font-size:0.75rem;color:var(--muted);grid-column:1/-1">Draw districts then click <strong style="color:var(--text)">Analyze</strong>.</div>';
+  document.getElementById('balance-badge').innerHTML='';
 }
 
-// ─── START ───────────────────────────────────────────────────────────────────
 init();
 </script>
 </body>
